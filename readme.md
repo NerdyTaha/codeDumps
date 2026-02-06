@@ -1,0 +1,3 @@
+# REPO CONTAINING CODE DUMPS - OF CERTAIN PROJECTS - THESE ARE JUST CODES I WANT TO BE HANDY - AND ITS PUBLIC. 
+
+- This only has a readme and files, that's it.
