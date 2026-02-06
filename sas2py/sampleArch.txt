@@ -1,0 +1,79 @@
+## Proposed Architecture Diagram
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Streamlit Frontend                   │
+│  [SAS Input] [Upload File] [Convert Button] [Settings]  │
+└────────────────────┬────────────────────────────────────┘
+                     │ HTTP POST
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                    FastAPI Backend                       │
+│                                                          │
+│  POST /convert                                           │
+│    ├─> Input Validation                                 │
+│    ├─> ANTLR Parser (SAS → Parse Tree)                 │
+│    ├─> AST Visitor (Parse Tree → IR)                   │
+│    ├─> Code Generator (IR → Python)                    │
+│    └─> Return {python_code, warnings, metadata}        │
+│                                                          │
+│  GET /validate                                           │
+│    └─> Syntax check only                               │
+└─────────────────────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                  Core Engine (Python)                    │
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│  │   Lexer      │→ │    Parser    │→ │  AST Visitor │ │
+│  │  (ANTLR)     │  │   (ANTLR)    │  │   (Custom)   │ │
+│  └──────────────┘  └──────────────┘  └──────┬───────┘ │
+│                                               │          │
+│                                               ▼          │
+│                                       ┌──────────────┐  │
+│                                       │      IR      │  │
+│                                       │  (DataClasses│  │
+│                                       └──────┬───────┘  │
+│                                               │          │
+│                                               ▼          │
+│                                       ┌──────────────┐  │
+│                                       │Code Generator│  │
+│                                       │   (Custom)   │  │
+│                                       └──────┬───────┘  │
+│                                               │          │
+│                                               ▼          │
+│                                        Python Code       │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Project Structure
+```
+sas-to-python/
+├── grammar/
+│   ├── SAS.g4                 # ANTLR grammar file
+│   └── generated/             # Auto-generated parser files
+│       ├── SASLexer.py
+│       ├── SASParser.py
+│       └── SASVisitor.py
+├── src/
+│   ├── ir/
+│   │   └── nodes.py           # IR dataclass definitions
+│   ├── parser/
+│   │   └── sas_to_ir.py       # Visitor implementation
+│   ├── codegen/
+│   │   ├── python_gen.py      # Python code generator
+│   │   └── templates/         # Jinja2 templates (optional)
+│   ├── api/
+│   │   └── main.py            # FastAPI application
+│   └── utils/
+│       └── sas_semantics.py   # SAS-specific logic
+├── frontend/
+│   └── app.py                 # Streamlit UI
+├── tests/
+│   ├── test_parser.py
+│   ├── test_codegen.py
+│   └── fixtures/
+│       ├── sample1.sas
+│       └── sample1.py         # Expected output
+├── requirements.txt
+└── README.md
